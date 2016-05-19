@@ -11,8 +11,19 @@
 	message : ${success}
 	<br/>
 	<br/>
-	Go back to <a href="<c:url value='/list' />">List of All Students</a>
-	
+	<c:choose>
+		<c:when test="${search}">
+			<a href="<c:url value='/edit-${employee.id}-employee' />">Just click Here to edit that student data</a>
+			<br/>
+			<br/>
+			Go back to <a href="<c:url value='/list' />">List of All Students</a>
+		</c:when>
+		<c:otherwise>
+
+			Go back to <a href="<c:url value='/list' />">List of All Students</a>
+		</c:otherwise>
+	</c:choose>
+
 </body>
 
 </html>

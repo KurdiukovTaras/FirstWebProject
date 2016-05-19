@@ -6,6 +6,7 @@ import java.util.Locale;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.websystique.springmvc.model.Employee;
 import com.websystique.springmvc.service.EmployeeService;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
 
 @Controller
 @RequestMapping("/")
@@ -28,13 +31,32 @@ public class AppController {
 	@Autowired
 	MessageSource messageSource;
 
-	@RequestMapping(value = { "/", "/list" }, method = RequestMethod.GET)
-	public String listEmployees(ModelMap model) {
 
+	@RequestMapping(value = { "/", "/list" }, method = RequestMethod.GET)
+	public ModelAndView listOfUsers(@RequestParam(required = false) Integer page) {
+		ModelAndView modelAndView = new ModelAndView("allemployees");
 		List<Employee> employees = service.findAllEmployees();
-		model.addAttribute("employees", employees);
-		return "allemployees";
+		PagedListHolder<Employee> pagedListHolder = new PagedListHolder<Employee>(employees);
+		pagedListHolder.setPageSize(10);
+		modelAndView.addObject("maxPages", pagedListHolder.getPageCount());
+
+		if(page==null || page < 1 || page > pagedListHolder.getPageCount())page=1;
+
+		modelAndView.addObject("page", page);
+		if(page == null || page < 1 || page > pagedListHolder.getPageCount()){
+			pagedListHolder.setPage(0);
+			modelAndView.addObject("employees", pagedListHolder.getPageList());
+		}
+		else if(page <= pagedListHolder.getPageCount()) {
+			pagedListHolder.setPage(page-1);
+			modelAndView.addObject("employees", pagedListHolder.getPageList());
+		}
+
+		return modelAndView;
 	}
+
+
+
 
 	@RequestMapping(value = { "/new" }, method = RequestMethod.GET)
 	public String newEmployee(ModelMap model) {
@@ -43,6 +65,8 @@ public class AppController {
 		model.addAttribute("edit", false);
 		return "registration";
 	}
+
+
 
 	@RequestMapping(value = { "/new" }, method = RequestMethod.POST)
 	public String saveEmployee(@Valid Employee employee, BindingResult result,
@@ -86,4 +110,25 @@ public class AppController {
 		return "redirect:/list";
 	}
 
+	@RequestMapping(value = { "/search" }, method = RequestMethod.GET)
+	public String searchEmployee(ModelMap model) {
+		Employee employee = new Employee();
+		model.addAttribute("employee", employee);
+		model.addAttribute("edit", false);
+		return "search";
+	}
+
+	@RequestMapping(value = { "/search" }, method = RequestMethod.POST)
+	public String searchEmployee(Employee employee, BindingResult result,
+								 ModelMap model) {
+		System.out.println(employee.getId());
+
+		model.addAttribute("success", "We find some student with such ID: "+service.findEmployeeById(employee.getId()).toString() );
+		model.addAttribute("search", true);
+		return "success";
+	}
+
 }
+
+
+
